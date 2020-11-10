@@ -30,7 +30,7 @@ class Board():
                 user_move += 7
 
         if user_move > 42:
-            # print("Move is too high. BREAK")
+            print("Move is too high. BREAK")
             Error = True
             return Error
 
@@ -89,13 +89,18 @@ class Game():
             user_move = player_list[turn_count % 2].player_move()
             self.b.make_move(user_move)
             turn_count += 1
+
+
             if self.b.check_win() is True:
-                # self.b.print_board()
+                self.b.print_board()
                 # print("Game Won")
                 # print (self.b.move_list)
                 # print('.', end = "")
+                print("Player " + str(turn_count % 2) + " wins!")
                 return turn_count % 2
             # self.b.print_board()
+        else: print("I THINK THIS A DRAW ERROR")
+        return 3
 
 class Tournament():
     def __init__(self):
@@ -103,7 +108,7 @@ class Tournament():
 
     def tournament(self):
         tourney_win_list = []
-        num_games = 500
+        num_games = 5
         for i in range(num_games):
             g = Game()
             winner = g.play_game()
