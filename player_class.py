@@ -63,6 +63,7 @@ class Player():
     def make_move_smart_2(self, board_dict):
         # Checks if can force a win
         # print("Start of Move Analysis")
+        # Test comment
         win_count = 0
         bad_move_list = []
         good_move_list = []
