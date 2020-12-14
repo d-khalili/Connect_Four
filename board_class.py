@@ -6,7 +6,6 @@
 # 3 = no spot available
 
 class Board():
-
     def __init__(self):
         self.board_dict = {1:'.', 2:'.', 3:'.', 4:'.', 5:'.', 6:'.', 7:'.', 8:'.', 9:'.', 10:'.', 11:'.', 12:'.', 13:'.', 14:'.', 15:'.', 16:'.', 17:'.', 18:'.', 19:'.', 20:'.', 21:'.', 22:'.', 23:'.', 24:'.', 25:'.', 26:'.', 27:'.', 28:'.', 29:'.', 30:'.', 31:'.', 32:'.', 33:'.', 34:'.', 35:'.', 36:'.', 37:'.', 38:'.', 39:'.', 40:'.', 41:'.', 42:'.'}
         self.move_list = []
@@ -51,8 +50,13 @@ class Board():
     def board_move(self, move, player_piece):
         move = int(move)
 
-        while move in self.move_list:
-            move += 7
+        while self.board_dict[move] != '.':
+            move +=7
+            if move > 42:
+                break
+
+        # while move in self.move_list:
+        #     move += 7
 
         self.board_dict[move] = player_piece
         self.move_list.append(move)
@@ -73,9 +77,14 @@ class Board():
                 for i in range(wincomb_dict[wp][1][1]):
                     if self.board_dict[wincomb_dict[wp][0][0]+x+y] == self.board_dict[wincomb_dict[wp][0][1]+x+y] == self.board_dict[wincomb_dict[wp][0][2]+x+y] == self.board_dict[wincomb_dict[wp][0][3]+x+y] != '.':
                         game_won = True
-                        # To print cause of victory
+                        # To print cause of victory:
                         # print(wp)
                         return game_won
                     x = x + wincomb_dict[wp][1][0]
                 y = y + wincomb_dict[wp][2][0]
         return game_won
+
+    def take_back(self):
+        last_move = self.move_list[-1]
+        self.board_dict[last_move] = '.'
+        del self.move_list[-1]

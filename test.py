@@ -1,26 +1,21 @@
-# test_dict = {"A": [[1, 3, 4], [5, 8]], "B": [49]}
+import random
+# dict_1 = {'a':1, 'b':2, 'c':3}
 #
-# print(test_dict["A"][0])
-
-
-class my_class():
-    def __init__(self):
-        my_var = 10
-
-    def print_var(self):
-        print(my_var)
-
-c = my_class()
-
-c.print_var()
-
-
-# number = 5 % 2
-# print(number)
-
-# def test_function():
-#     var_1 = 5
-#     var_2 = "banana"
-#     return var_1, var_2
+# temp_dict = dict_1.copy()
 #
-# print(test_function()[1])
+# print(temp_dict)
+#
+# temp_dict['c'] = 5
+#
+# print(temp_dict)
+#
+# temp_dict = dict_1.copy()
+#
+# print(temp_dict)
+
+
+for i in range (50):
+    r = random.randint(1,7)
+    if r == 7:
+        print(r)
+        break
