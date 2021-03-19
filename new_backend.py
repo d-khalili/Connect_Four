@@ -103,6 +103,11 @@ class Player():
             user_move = int(input("Human Move: "))
             return user_move
 
+        if self.player_type == 'Stockfish':
+
+            return user_move
+
+
 class Game():
     def __init__(self):
         self.B = Board()
