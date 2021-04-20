@@ -8,6 +8,7 @@ class Board():
         self.move_list = []
         self.turn_count = 0
         self.create_win_conditions()
+        self.possible_move_list = [1, 2, 3, 4, 5, 6, 7]
 
     def print_board(self):
         i = 36
@@ -53,33 +54,25 @@ class Board():
         except:
             pass
 
-    def check_win(self, player_ID):
+    def check_win(self, player_set):
         conn = sqlite3.connect('win_combo_db.db')
         cursor = conn.cursor()
-
-        if player_ID == 1:
-            c_player_set = self.player_1_set
-        if player_ID == 2:
-            c_player_set = self.player_2_set
-
         cursor.execute('''SELECT * FROM win_conditions_table''')
         all_sets = cursor.fetchall()
 
         for set in all_sets:
-            if all(item in c_player_set for item in set):
-                return int(player_ID)
-
-        if self.turn_count == 42:
-            return 3
-
-        else:
-            return 0
+            if all(item in player_set for item in set):
+                return 1
+        return 0
 
     def board_move(self, move, player_ID):
-        while move in self.move_list:
-            move += 7
-            if move > 42:
-                return 0
+        print("Debugging here: ")
+        print(self.possible_move_list)
+        print(move)
+
+        self.possible_move_list.remove(move)
+        if move + 7 <= 42:
+            self.possible_move_list.append(move+7)
 
         if player_ID == 1:
             self.player_1_set.add(int(move))
@@ -89,14 +82,29 @@ class Board():
         self.move_list.append(int(move))
         self.turn_count += 1
 
+    # def take_back(self, move, player_ID):
+    #     last_move = self.move_list[-1]
+    #
+    #     if player_ID == 1:
+    #         self.player_1_set.remove(last_move)
+    #     if player_ID == 2:
+    #         self.player_2_set.remove(last_move)
+    #     del self.move_list[-1]
+    #     self.turn_count -= 1
+    #
+    #     self.possible_move_list.append(move)
+    #
+    #
+    #     self.possible_move_list.remove(move+7)
+
 class Player():
     def __init__(self, player_type, player_ID):
         self.player_type = player_type
         self.player_ID = player_ID
 
-    def make_move(self):
+    def make_move(self, current_B):
         if self.player_type == 'Random':
-            user_move = int(random.randint(1,7))
+            user_move = random.choice(current_B.possible_move_list)
             return user_move
 
         if self.player_type == 'Human':
@@ -104,6 +112,34 @@ class Player():
             return user_move
 
         if self.player_type == 'Stockfish':
+            temp_B = Board()
+            temp_B.player_1_set = current_B.player_1_set.copy()
+            temp_B.player_2_set = current_B.player_2_set.copy()
+            temp_B.move_list = current_B.move_list.copy()
+            temp_B.turn_count = current_B.turn_count
+            temp_B.possible_move_list = current_B.possible_move_list.copy()
+
+            if self.player_ID == 1:
+                current_set = temp_B.player_1_set
+            if self.player_ID == 2:
+                current_set = temp_B.player_2_set
+
+            for move in temp_B.possible_move_list:
+                current_set.add(move)
+                print("Trying move: " + str(move))
+
+                if current_B.check_win(current_set):
+                    return move
+                current_set.remove(move)
+                #
+                #
+                # temp_B.board_move(move, self.player_ID)
+                # if temp_B.check_win(set):
+                #     return move
+                # # temp_B.print_board()
+                # temp_B.take_back(move, self.player_ID)
+
+            user_move = random.choice(current_B.possible_move_list)
 
             return user_move
 
@@ -112,34 +148,30 @@ class Game():
     def __init__(self):
         self.B = Board()
         self.P1 = Player('Random', 1)
-        self.P2 = Player('Random', 2)
+        self.P2 = Player('Stockfish', 2)
 
     def play_game(self, print_status):
-        while self.B.turn_count < 43:
+        while self.B.turn_count <= 42:
             if self.B.turn_count % 2:
                 current_player = self.P2
+                current_set = self.B.player_2_set
             else:
                 current_player = self.P1
+                current_set = self.B.player_1_set
 
             if print_status == 2:
-                G.B.print_board()
+                self.B.print_board()
 
-            user_move = current_player.make_move()
+            user_move = current_player.make_move(self.B)
             self.B.board_move(user_move, current_player.player_ID)
 
-            if self.B.check_win(current_player.player_ID):
-                game_result = self.B.check_win(current_player.player_ID)
-
+            if self.B.check_win(current_set):
+                game_result = current_player.player_ID
                 if print_status:
-                    G.B.print_board()
+                    self.B.print_board()
+                    print(game_result, self.B.player_1_set, self.B.player_2_set)
 
-                print(game_result, self.B.player_1_set, self.B.player_2_set)
                 return (game_result, self.B.player_1_set, self.B.player_2_set)
 
-
-        print(self.B.turn_count)
-        G.B.print_board()
-
-
-G = Game()
-G.play_game(1)
+        game_result == 3
+        return (game_result, self.B.player_1_set, self.B.player_2_set)
