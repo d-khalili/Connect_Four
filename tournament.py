@@ -1,7 +1,5 @@
 import game
 
-
-
 # PRINT STATUS:
 # 0 is nothing. Just Tournament STAT
 # 1 is End Game plus sets
