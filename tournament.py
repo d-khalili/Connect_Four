@@ -4,14 +4,15 @@ import game
 # 0 is nothing. Just Tournament STAT
 # 1 is End Game plus sets
 # 2 is every move
-print_status = 2
-number_of_games = 100
-i = 0
+print_status = 1
+number_of_games = 1000
+
 
 player_1_wins = 0
 player_2_wins = 0
 player_draws = 0
 
+i = 0
 while i < number_of_games:
     G = game.Game()
     result = G.play_game(print_status)
