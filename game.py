@@ -1,22 +1,76 @@
 import random
 import sqlite3
+import stockfish
 
-class Board():
-    def __init__(self):
-        self.player_1_set = set()
-        self.player_2_set = set()
-        self.move_list = []
-        self.turn_count = 0
-        self.create_win_conditions()
+class Game():
+    def __init__(self, player_1_type, player_2_type, print_status):
+        self.player_1_type = player_1_type
+        self.player_2_type = player_2_type
+        self.player_1_list = []
+        self.player_2_list = []
+        self.print_status = print_status
         self.possible_move_list = [1, 2, 3, 4, 5, 6, 7]
+        self.move_number = 0
+        self.player_lists = [self.player_1_list, self.player_2_list]
+        self.player_types_list = [self.player_1_type, self.player_2_type]
+
+    def play_game(self):
+        while self.move_number < 42:
+            current_player_type = self.player_types_list[self.move_number % 2]
+            current_player_list = self.player_lists[self.move_number % 2]
+
+            move = self.make_move(current_player_type)
+            self.update_table(move, current_player_list)
+            if self.print_status == 2:
+                self.print_board()
+                print("User move: " + str(move))
+
+            if self.is_win(current_player_list) != 0:
+                win_id = (self.move_number % 2) + 1
+                if self.print_status != 0:
+                    print("Winner is Player: " + str(win_id) + " ("+ str(current_player_type) + ")")
+                    self.print_board()
+                return win_id, self.player_1_list, self.player_2_list
+
+            self.move_number += 1
+
+        print("This is a Draw?")
+        win_id = 3
+        return win_id, self.player_1_list, self.player_2_list
+
+    def make_move(self, player_type):
+        if player_type == 'Random':
+            user_move = self.make_move_random()
+        if player_type == 'Human':
+            user_move = self.make_move_human()
+        if player_type == 'Stockfish':
+            user_move = stockfish.make_move_stockfish()
+        return user_move
+
+    def make_move_random(self):
+        user_move = int(random.choice(self.possible_move_list))
+        return user_move
+
+    def make_move_human(self):
+        user_move = int(input("Human Move: "))
+        return user_move
+
+    def make_move_stockfish(self):
+        pass
+
+    def update_table(self, user_move, current_player_list):
+        current_player_list.append(user_move)
+        self.possible_move_list.remove(user_move)
+        if user_move + 7 <= 42:
+            self.possible_move_list.append(user_move + 7)
 
     def print_board(self):
         i = 36
         print("")
         while i > 0:
-            if i in self.player_1_set:
+            if i in self.player_1_list:
                 print('X', end="")
-            elif i in self.player_2_set:
+            elif i in self.player_2_list:
                 print('O', end="")
             else:
                 print('.', end ="")
@@ -25,6 +79,20 @@ class Board():
                 i -= 14
             i += 1
         print("")
+
+    def is_win(self, current_player_list):
+        try:
+            conn = sqlite3.connect('win_combo_db.db')
+        except:
+            self.create_win_conditions()
+            conn = sqlite3.connect('win_combo_db.db')
+        cursor = conn.cursor()
+        cursor.execute('''SELECT * FROM win_conditions_table''')
+        all_win_conditions = cursor.fetchall()
+        for win_set in all_win_conditions:
+            if all(item in current_player_list for item in win_set):
+                return 1
+        return 0
 
     def create_win_conditions(self):
         conn = sqlite3.connect('win_combo_db.db')
@@ -53,125 +121,3 @@ class Board():
             conn.close()
         except:
             pass
-
-    def check_win(self, player_set):
-        conn = sqlite3.connect('win_combo_db.db')
-        cursor = conn.cursor()
-        cursor.execute('''SELECT * FROM win_conditions_table''')
-        all_sets = cursor.fetchall()
-
-        for set in all_sets:
-            if all(item in player_set for item in set):
-                return 1
-        return 0
-
-    def board_move(self, move, player_ID):
-        print("Debugging here: ")
-        print(self.possible_move_list)
-        print(move)
-
-        self.possible_move_list.remove(move)
-        if move + 7 <= 42:
-            self.possible_move_list.append(move+7)
-
-        if player_ID == 1:
-            self.player_1_set.add(int(move))
-        if player_ID == 2:
-            self.player_2_set.add(int(move))
-
-        self.move_list.append(int(move))
-        self.turn_count += 1
-
-    # def take_back(self, move, player_ID):
-    #     last_move = self.move_list[-1]
-    #
-    #     if player_ID == 1:
-    #         self.player_1_set.remove(last_move)
-    #     if player_ID == 2:
-    #         self.player_2_set.remove(last_move)
-    #     del self.move_list[-1]
-    #     self.turn_count -= 1
-    #
-    #     self.possible_move_list.append(move)
-    #
-    #
-    #     self.possible_move_list.remove(move+7)
-
-class Player():
-    def __init__(self, player_type, player_ID):
-        self.player_type = player_type
-        self.player_ID = player_ID
-
-    def make_move(self, current_B):
-        if self.player_type == 'Random':
-            user_move = random.choice(current_B.possible_move_list)
-            return user_move
-
-        if self.player_type == 'Human':
-            user_move = int(input("Human Move: "))
-            return user_move
-
-        if self.player_type == 'Stockfish':
-            temp_B = Board()
-            temp_B.player_1_set = current_B.player_1_set.copy()
-            temp_B.player_2_set = current_B.player_2_set.copy()
-            temp_B.move_list = current_B.move_list.copy()
-            temp_B.turn_count = current_B.turn_count
-            temp_B.possible_move_list = current_B.possible_move_list.copy()
-
-            if self.player_ID == 1:
-                current_set = temp_B.player_1_set
-            if self.player_ID == 2:
-                current_set = temp_B.player_2_set
-
-            for move in temp_B.possible_move_list:
-                current_set.add(move)
-                print("Trying move: " + str(move))
-
-                if current_B.check_win(current_set):
-                    return move
-                current_set.remove(move)
-                #
-                #
-                # temp_B.board_move(move, self.player_ID)
-                # if temp_B.check_win(set):
-                #     return move
-                # # temp_B.print_board()
-                # temp_B.take_back(move, self.player_ID)
-
-            user_move = random.choice(current_B.possible_move_list)
-
-            return user_move
-
-
-class Game():
-    def __init__(self):
-        self.B = Board()
-        self.P1 = Player('Random', 1)
-        self.P2 = Player('Stockfish', 2)
-
-    def play_game(self, print_status):
-        while self.B.turn_count <= 42:
-            if self.B.turn_count % 2:
-                current_player = self.P2
-                current_set = self.B.player_2_set
-            else:
-                current_player = self.P1
-                current_set = self.B.player_1_set
-
-            if print_status == 2:
-                self.B.print_board()
-
-            user_move = current_player.make_move(self.B)
-            self.B.board_move(user_move, current_player.player_ID)
-
-            if self.B.check_win(current_set):
-                game_result = current_player.player_ID
-                if print_status:
-                    self.B.print_board()
-                    print(game_result, self.B.player_1_set, self.B.player_2_set)
-
-                return (game_result, self.B.player_1_set, self.B.player_2_set)
-
-        game_result == 3
-        return (game_result, self.B.player_1_set, self.B.player_2_set)
